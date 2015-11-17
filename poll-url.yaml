@@ -1,0 +1,55 @@
+- defaults:
+    name: poll-url-defaults
+    logrotate:
+        numToKeep: 15
+        artifactNumToKeep: 15
+    wrappers:
+        - ansicolor
+        - workspace-cleanup
+        - timestamps
+
+- job-template:
+    name: '{name}-url-trigger'
+    defaults: poll-url-defaults
+    concurrent: false
+    node: master
+    triggers:
+      - pollurl:
+          cron: 'H/20 * * * *'
+          urls:
+            - url: '{url}'
+              check-content:
+                - simple: true
+    builders:
+      shell: |
+        echo "URL has changed"
+    publishers:
+      - email-ext:
+          recipients: '{recepients}'
+          reply-to: $DEFAULT_REPLYTO
+          content-type: default
+          subject: $DEFAULT_SUBJECT
+          body: $DEFAULT_CONTENT
+          attach-build-log: true
+          always: true
+          matrix-trigger: only-configurations
+          send-to:
+            - requester
+            - recipients
+    scm:
+      - git:
+          url: https://github.com/openstack/kolla
+          branches:
+            - origin/master
+          basedir: kolla
+          skip-tag: True
+          timeout: 20
+   shell: |
+      ./kolla/tools/build.py regex nova-compute data nova-libvirt openvswitch-db openvswitch-vswitchd -n tripleoupstream --tag latest -b centos -t binary -T 6
+
+- project:
+    name: delorean
+    url: http://trunk.rdoproject.org/centos7/current/delorean.repo
+    recepients: rhallise@redhat.com
+    jobs:
+      - '{name}-url-trigger'
