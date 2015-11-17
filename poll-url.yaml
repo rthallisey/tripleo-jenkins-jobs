@@ -15,7 +15,7 @@
     node: master
     triggers:
       - pollurl:
-          cron: 'H/20 * * * *'
+          cron: 'H/5 * * * *'
           urls:
             - url: '{url}'
               check-content:
@@ -43,9 +43,9 @@
             - origin/master
           basedir: kolla
           skip-tag: True
-          timeout: 20
-   shell: |
-      ./kolla/tools/build.py regex nova-compute data nova-libvirt openvswitch-db openvswitch-vswitchd -n tripleoupstream --tag latest -b centos -t binary -T 6
+    builders:
+      shell: |
+        ./kolla/tools/build.py regex nova-compute data nova-libvirt openvswitch-db openvswitch-vswitchd -n tripleoupstream --tag latest -b centos -t binary -T 6
 
 - project:
     name: delorean
