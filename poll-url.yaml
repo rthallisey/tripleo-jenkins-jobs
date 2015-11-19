@@ -9,6 +9,7 @@
         - timestamps
 
 - job-template:
+    node: tripleo-container
     name: '{name}-url-trigger'
     defaults: poll-url-defaults
     concurrent: false
@@ -20,9 +21,19 @@
             - url: '{url}'
               check-content:
                 - simple: true
+    scm:
+      - git:
+          url: https://github.com/openstack/kolla
+          branches:
+            - origin/master
+          basedir: kolla
+          skip-tag: True
     builders:
-      shell: |
-        echo "URL has changed"
+      - shell: |
+          set -x
+          pushd kolla
+          sudo ./tools/build.py regex nova-compute data nova-libvirt openvswitch-db openvswitch-vswitchd -n tripleoupstream --tag latest -b centos -t binary -T 6
+          popd
     publishers:
       - email-ext:
           recipients: '{recepients}'
@@ -36,16 +47,6 @@
           send-to:
             - requester
             - recipients
-    scm:
-      - git:
-          url: https://github.com/openstack/kolla
-          branches:
-            - origin/master
-          basedir: kolla
-          skip-tag: True
-    builders:
-      shell: |
-        ./kolla/tools/build.py regex nova-compute data nova-libvirt openvswitch-db openvswitch-vswitchd -n tripleoupstream --tag latest -b centos -t binary -T 6
 
 - project:
     name: delorean
