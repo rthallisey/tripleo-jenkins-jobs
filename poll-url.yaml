@@ -9,11 +9,10 @@
         - timestamps
 
 - job-template:
-    node: tripleo-container
+    node: tripleo-containers-32d18af3
     name: '{name}-url-trigger'
     defaults: poll-url-defaults
     concurrent: false
-    node: master
     triggers:
       - pollurl:
           cron: 'H/5 * * * *'
@@ -32,8 +31,12 @@
       - shell: |
           set -x
           pushd kolla
-          sudo ./tools/build.py regex nova-compute data nova-libvirt openvswitch-db openvswitch-vswitchd -n tripleoupstream --tag latest -b centos -t binary -T 6
+          ./tools/build.py regex nova-compute data nova-libvirt neutron-openvswitch-agent openvswitch-db openvswitch-vswitchd -n docker.io/tripleoupstream --tag latest -b centos -t binary -T 6
+          wget http://shell.bos.redhat.com/~rhallise/image-push.sh
+          chmod 766 image-push.sh
+          ./image-push.sh docker.io/tripleoupstream latest
           popd
+
     publishers:
       - email-ext:
           recipients: '{recepients}'
